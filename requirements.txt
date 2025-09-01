@@ -1,0 +1,3 @@
+aiohttp
+ultralytics
+shapely
