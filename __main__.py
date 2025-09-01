@@ -4,6 +4,7 @@ import pathlib
 import argparse
 import asyncio
 import logging
+import platform
 import signal
 import ssl
 
@@ -144,15 +145,18 @@ def main(args):
         )
     )
 
-    for signum in [signal.SIGINT, signal.SIGTERM]:
-        event_loop.add_signal_handler(
-            sig=signum, 
-            callback=main_task.cancel
-        )
+    if platform.system() != "Windows":
+        for signum in [signal.SIGINT, signal.SIGTERM]:
+            event_loop.add_signal_handler(
+                sig=signum, 
+                callback=main_task.cancel
+            )
     try:
         event_loop.run_until_complete(main_task)
     except asyncio.exceptions.CancelledError:
         pass
+    except KeyboardInterrupt:
+        logging.info("Received keyboard interrupt. Exiting...")
     finally:
         event_loop.close()
         logging.info("Event loop closed.")
