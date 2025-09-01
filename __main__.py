@@ -69,7 +69,7 @@ async def fetch_image():
             img_url = camera_json[0]["cameras"][CAMERA_ID[2]]["images"][-1]
 
             logging.info(f"Downloading \"{img_url}\"...")
-            async with session.get(img_url) as img_response:
+            async with session.get(img_url, ssl=ssl_ctx) as img_response:
                 return camera_json[0], Image.open(io.BytesIO(await img_response.read()))
 
 async def predict_image(image: Image.Image):
