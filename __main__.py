@@ -13,7 +13,7 @@ from PIL import Image
 from shapely.geometry import Polygon
 
 
-CAMERA_ID = (1, 96, 0, 0,)
+CAMERA_ID = (1, 96, 0, 0,)  # 安順寮排水出口
 CAPTURE_TIMEOUT = 60
 MODEL_FOR_NON_IR: YOLO
 MODEL_FOR_IR: YOLO
