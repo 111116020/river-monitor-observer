@@ -7,6 +7,7 @@ import logging
 import platform
 import signal
 import ssl
+import time
 
 from ultralytics import YOLO
 import aiohttp
@@ -83,7 +84,7 @@ async def predict_image(image: Image.Image):
     model = MODEL_FOR_IR if is_ir(image=image) else MODEL_FOR_NON_IR
     result = model(image)[0]
 
-    predicted_points = result.masks.xyn[0][1:]
+    predicted_points = result.masks.xyn[0]
     bounding_box = Polygon([[580, 210], [740, 210], [740, 650], [580, 650]])
     polygon = Polygon(predicted_points * image.size).intersection(other=bounding_box)
     predicted_depth = polygon.area / bounding_box.area * 8
@@ -109,33 +110,35 @@ def main(args):
             return
         image_bytes = io.BytesIO()
         image.save(image_bytes, format="png")
-        try:
-            # Load upload server's self-signed certificate
-            ssl_ctx = ssl.create_default_context()
-            ssl_ctx.load_verify_locations(pathlib.Path(__file__).parent.joinpath("server.crt"))
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url=args.UPLOAD_URL,
-                    data={
-                        "river_name": camera_json["Name"],
-                        "country_name": camera_json["Counname"],
-                        "basin_name": camera_json["Basin_name"],
-                        "points": json.dumps(points.tolist()),
-                        "depth": str(depth),
-                        "image": image_bytes.getvalue()
-                    },
-                    ssl=ssl_ctx
-                ) as resp:
-                    resp.raise_for_status()
-                    logging.debug("Server response:")
-                    logging.debug(await resp.text())
-            logging.info("Successfully sent the data.")
-        except Exception as e:
-            logging.exception("Unable to upload the data!", exc_info=e)
-        finally:
-            if args.image_path:
-                asyncio.get_event_loop().stop()
+        if hasattr(args, 'upload_url') and args.upload_url:
+            try:
+                # Load upload server's self-signed certificate
+                ssl_ctx = ssl.create_default_context()
+                ssl_ctx.load_verify_locations(pathlib.Path(__file__).parent.joinpath("server.crt"))
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        url=args.upload_url,
+                        data={
+                            "river_name": camera_json["Name"],
+                            "country_name": camera_json["Counname"],
+                            "basin_name": camera_json["Basin_name"],
+                            "points": json.dumps(points.tolist()),
+                            "depth": str(depth),
+                            "image": image_bytes.getvalue()
+                        },
+                        ssl=ssl_ctx
+                    ) as resp:
+                        resp.raise_for_status()
+                        logging.debug("Server response:")
+                        logging.debug(await resp.text())
+                logging.info("Successfully sent the data.")
+            except Exception as e:
+                logging.exception("Unable to upload the data!", exc_info=e)
+
+        if args.image_path:
+            asyncio.get_event_loop().stop()
 
     event_loop = asyncio.new_event_loop()
     main_task = event_loop.create_task(
@@ -164,7 +167,7 @@ def main(args):
 
 if __name__ == "__main__":
     args_parser = argparse.ArgumentParser()
-    args_parser.add_argument("UPLOAD_URL")
+    args_parser.add_argument("--upload-url")
     args_parser.add_argument("--image-path", type=pathlib.Path, default=None)
     
     logging_handler = logging.StreamHandler()
