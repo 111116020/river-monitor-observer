@@ -14,9 +14,12 @@ async def main(args):
 
     while True:
         for source in fetching_sources:
-            image_data, inference_data = await source.get_image_data()
-            predicted_depth = model.inference(image_data.realtime_image.copy(), inference_data)
-            await api.upload(depth=predicted_depth, image_data=image_data)
+            try:
+                image_data, inference_data = await source.get_image_data()
+                predicted_depth = model.inference(image_data.realtime_image.copy(), inference_data)
+                await api.upload(depth=predicted_depth, image_data=image_data)
+            except Exception as e:
+                logging.exception("An unexpected error occurred.", exc_info=e)
         try:
             await asyncio.sleep(60)
         except asyncio.CancelledError:
