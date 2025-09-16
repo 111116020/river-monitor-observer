@@ -5,7 +5,10 @@ RUN apt-get install -y libglib2.0-0 libsm6 libxrender1 libgl1 tesseract-ocr
 RUN mkdir /workspace
 
 WORKDIR /workspace
-COPY river_observer/ /workspace/river_observer
+COPY models/ /workspace/models/
+COPY river_observer/ /workspace/river_observer/
+COPY tessdata/ /workspace/tessdata/
+COPY config.yaml /workspace
 COPY requirements.txt /workspace
 RUN python3 -m pip install -r /workspace/requirements.txt
-CMD python3 /workspace/river_observer
+CMD python3 -m river_observer
