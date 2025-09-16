@@ -1,0 +1,16 @@
+# This is the main configuration file for the application.
+
+# API settings
+api:
+  # The base URL for the API endpoint
+  url: http://example.com/api
+
+# Model settings
+models:
+  # The absolute or relative path where model files are stored
+  path: /path/to/models
+
+# Tesseract OCR settings
+tesseract:
+  # The path to the tessdata directory containing language data files for Tesseract
+  tessdata_path: /path/to/tessdata

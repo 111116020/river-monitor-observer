@@ -2,9 +2,9 @@ import argparse
 import asyncio
 import logging
 
-import api
-from river_source.wra import WRAImageSource
-from util import CustomFormatter
+from river_observer import api
+from river_observer.util import CustomFormatter
+from river_observer.river_source.wra import WRAImageSource
 
 
 async def main(args):
@@ -27,36 +27,22 @@ async def main(args):
 
 if __name__ == "__main__":
     args_parser = argparse.ArgumentParser()
-    
+
     logging_handler = logging.StreamHandler()
     logging_handler.setFormatter(CustomFormatter())
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         handlers=[logging_handler]
     )
 
-    import model
+    from river_observer import config
+
+    config_thread = config.start_watcher()
+
+    from river_observer import model
+
     asyncio.run(main=main(args=args_parser.parse_args()))
-
-    # event_loop = asyncio.new_event_loop()
-    # main_task = event_loop.create_task(main(args_parser.parse_args()))
-
-    # Windows does not have signal, so skip if the OS is Windows.
-    # if platform.system().lower() != "windows":
-    #     for signum in [signal.SIGINT, signal.SIGTERM]:
-    #         event_loop.add_signal_handler(
-    #             sig=signum, 
-    #             callback=main_task.cancel
-    #         )
-    # try:
-    #     event_loop.run_until_complete(main_task)
-    # except asyncio.exceptions.CancelledError:
-    #     pass
-    # except KeyboardInterrupt:
-    #     logging.info("Received keyboard interrupt. Exiting...")
-    #     if platform.system().lower() == "windows":
-    #         print(main_task.cancel())
-    #     print(main_task.cancelling())
-    # finally:
-    #     event_loop.close()
-    #     logging.info("Event loop closed.")
+    logging.info("Stopped the main event loop.")
+    config_thread.stop()
+    config_thread.join()
+    logging.info("Stopped the configuration watcher.")

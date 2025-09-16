@@ -7,9 +7,7 @@ from typing import Tuple
 import aiohttp
 from PIL import Image
 
-from . import ImageSource, ImageData
-
-from .util import is_ir
+from river_observer.river_source import ImageSource, ImageData
 
 
 class WRAImageSource(ImageSource):
@@ -44,26 +42,22 @@ class WRAImageSource(ImageSource):
             async with session.get(img_url, ssl=self._ssl_ctx) as img_response:
                 img_response.raise_for_status()
                 image = Image.open(io.BytesIO(await img_response.read()))
-                image_is_ir = is_ir(image)
 
-                inference_data = {
-                    "model_name": "WRA-%d_%d_%d-%s" % (*self.camera_id, "ir" if image_is_ir else "non_ir"),
-                    "gauge_info": {
+                gauge_info: dict
+                if self.camera_id == (1, 96, 0,):
+                    gauge_info = {
                         "max": 8,
                         "meter_in_pixel": 1324
-                    } if self.camera_id == (1, 96, 0) else {} ,
-                    "postprocess": []
+                    }
+                else:
+                    gauge_info = {}
+                inference_data = {
+                    "inference_processor": "WRAInferenceProcessor",
+                    "init_kwargs": {
+                        "camera_id": self.camera_id,
+                        "gauge_info": gauge_info
+                    }
                 }
-                if not image_is_ir:
-                    inference_data["postprocess"].append({
-                        "action": "ocr", 
-                        "ocr_module": ".wra",
-                        "ocr_class": "WRAOCRPreprocess", 
-                        "ocr_kwargs": { 
-                            "camera_id": self.camera_id,
-                            "threshold": (100, 300)
-                        }
-                    })
 
                 return ImageData(
                     realtime_image=image,

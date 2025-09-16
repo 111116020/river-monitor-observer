@@ -2,10 +2,9 @@ import io
 import logging
 import aiohttp
 
-from river_source import ImageData
+from river_observer import config
+from river_observer.river_source import ImageData
 
-
-API_BASE_URL = "https://project-0331.eastasia.cloudapp.azure.com/api"
 
 _api_logger = logging.getLogger("API")
 
@@ -15,7 +14,7 @@ async def upload(depth: float, image_data: ImageData):
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            url=f"{API_BASE_URL}/upload",
+            url=f"{config.get_config()['api']['url']}/upload",
             data={
                 "river_name": image_data.river_name,
                 "country_name": image_data.country_name,
