@@ -27,8 +27,8 @@ class WRAInferenceProcessor(InferenceProcessor):
         if "tesseract_cmd" in tesseract_config.keys():
             pytesseract.pytesseract.tesseract_cmd = tesseract_config["tesseract_cmd"]
         ocr_config = "--psm 6 -c tessedit_char_whitelist=\"0123456789\""
-        if "tessdata_dir" in tesseract_config.keys():
-            ocr_config += " --tessdata \"%s\"" % tesseract_config["tessdata_dir"]
+        if "tessdata_path" in tesseract_config.keys():
+            ocr_config += " --tessdata-dir \"%s\"" % tesseract_config["tessdata_path"]
         ocr_result = pytesseract.image_to_data(
             image=gauge_image, 
             config=ocr_config,
