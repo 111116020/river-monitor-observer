@@ -16,7 +16,7 @@ class WRAImageSource(ImageSource):
 
         # self._logger.debug("Creating SSL context for malformed X.509 certificates...")
         self._ssl_ctx = ssl.create_default_context()
-        # self._ssl_ctx &= ~ssl.VERIFY_X509_STRICT
+        self._ssl_ctx &= ~ssl.VERIFY_X509_STRICT
 
         self.camera_id = camera_id
         self._logger.info("Initialized with camera ID (%d, %d, %d).", *camera_id)
