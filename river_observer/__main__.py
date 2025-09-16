@@ -28,16 +28,16 @@ async def main(args):
 if __name__ == "__main__":
     args_parser = argparse.ArgumentParser()
 
-    logging_handler = logging.StreamHandler()
-    logging_handler.setFormatter(CustomFormatter())
-    logging.basicConfig(
-        level=logging.INFO,
-        handlers=[logging_handler]
-    )
-
     from river_observer import config
 
     config_thread = config.start_watcher()
+
+    logging_handler = logging.StreamHandler()
+    logging_handler.setFormatter(CustomFormatter())
+    logging.basicConfig(
+        level=logging.getLevelNamesMapping()[config.get_config().get("logging", {"level": "info"})["level"].upper()],
+        handlers=[logging_handler]
+    )
 
     from river_observer import model
 
