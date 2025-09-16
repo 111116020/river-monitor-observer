@@ -6,7 +6,7 @@ from typing import Tuple
 from PIL import Image, ImageEnhance, ImageFilter
 import numpy
 import pytesseract
-import scipy
+import scipy.ndimage
 from ultralytics import YOLO
 
 from river_observer import config
@@ -26,6 +26,8 @@ class WRAInferenceProcessor(InferenceProcessor):
         return img_r == img_g == img_b
     
     def _ocr_1_96_0_nonir_preprocess(self, image: Image.Image):
+        threshold = (100, 300,)
+
         image = image.filter(ImageFilter.SHARPEN)
         image = ImageEnhance.Brightness(image).enhance(0.8)
         image = ImageEnhance.Contrast(image).enhance(5)
@@ -49,7 +51,7 @@ class WRAInferenceProcessor(InferenceProcessor):
             width = cols.max() + 1 - cols.min()
             height = rows.max() + 1 - rows.min()
             size_of_component = m.sum()
-            if not (self.threshold[0] < size_of_component < self.threshold[1]):
+            if not (threshold[0] < size_of_component < threshold[1]):
                 labels[labels == i] = 0
             if not (10 < width < 30 and 10 < height < 30):
                 labels[labels == i] = 0
