@@ -1,2 +1,6 @@
 aiohttp
+numpy
 Pillow
+pytesseract
+scipy
+ultralytics
