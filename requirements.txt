@@ -1,7 +1,7 @@
-aiohttp
-numpy
-Pillow
-pytesseract
-scipy
-ultralytics
-watchdog
+aiohttp==3.12.15
+numpy==2.1.2
+pillow==11.0.0
+pytesseract==0.3.13
+scipy==1.16.2
+ultralytics==8.3.200
+watchdog==6.0.0
