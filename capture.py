@@ -13,7 +13,7 @@ async def main():
         image_data.realtime_image.save(OUTPUT_PATH.joinpath("%d.jpg" % int(time.time())))
         try:
             await asyncio.sleep(60)
-        except KeyboardInterrupt:
+        except asyncio.CancelledError:
             break
 
 if __name__ == "__main__":
