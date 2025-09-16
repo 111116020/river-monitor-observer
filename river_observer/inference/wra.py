@@ -83,13 +83,12 @@ class WRAInferenceProcessor(InferenceProcessor):
 
         # OCR
         inferenced_depth = -1.0
-        if image_is_ir:
-            tesseract_config = config.get_config().get("tesseract", {})
-            if self.camera_id == (1, 96, 0,):
-                if image_is_ir:
-                    pass
-                else:
-                    inferenced_depth = self._ocr_1_96_0_nonir(gauge_image, tesseract_config)
+        tesseract_config = config.get_config().get("tesseract", {})
+        if self.camera_id == (1, 96, 0,):
+            if image_is_ir:
+                pass
+            else:
+                inferenced_depth = self._ocr_1_96_0_nonir(gauge_image, tesseract_config)
         
         # Estimate with area
         if inferenced_depth < 0:
