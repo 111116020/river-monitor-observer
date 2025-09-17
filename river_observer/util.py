@@ -12,7 +12,7 @@ class CustomFormatter(logging.Formatter):
     _red = "\033[1;31m"
     _reset = "\033[0m"
 
-    _format = f"{_grey}%(asctime)s{_reset} [{{level_color}}%(levelname)s{_reset}]\t{_purple}%(name)s{_reset} %(message)s"
+    _format = f"{_grey}%(asctime)s{_reset} [{{level_color}}%(levelname).4s{_reset}]\t{_purple}%(name)s{_reset} %(message)s"
 
     FORMATS = {
         logging.DEBUG:      _format.format(level_color=_green),
