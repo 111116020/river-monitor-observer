@@ -1,8 +1,11 @@
 import argparse
 import asyncio
 import logging
+import os
+import pathlib
 import platform
 import signal
+import sys
 
 from river_observer import api
 from river_observer.util import CustomFormatter
@@ -32,7 +35,11 @@ async def main():
         try:
             for source in fetching_sources:
                 image_data, inference_data = await source.get_image_data()
-                predicted_depth = model.inference(image_data.realtime_image.copy(), inference_data)
+
+                from river_observer import inference
+                inference_processor = getattr(inference, inference_data["inference_processor"])(**inference_data["init_kwargs"])
+                predicted_depth = inference_processor.inference(image_data.realtime_image.copy())
+
                 await api.upload(depth=predicted_depth, image_data=image_data)
         except Exception as e:
             logging.exception("An unexpected error occurred.", exc_info=e)
@@ -46,9 +53,19 @@ async def main():
             break
 
 if __name__ == "__main__":
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument(
+        "--config-file", 
+        type=pathlib.Path,
+        default=pathlib.Path(".").joinpath("config.yaml")
+    )
+    args = args_parser.parse_args()
+
     from river_observer import config
 
-    config_thread = config.start_watcher()
+    config.load_config(
+        config_file=pathlib.Path(args.config_file)
+    )
 
     logging_handler = logging.StreamHandler()
     logging_handler.setFormatter(CustomFormatter())
@@ -56,11 +73,6 @@ if __name__ == "__main__":
         level=logging.getLevelNamesMapping()[config.get_config().get("logging", {"level": "info"})["level"].upper()],
         handlers=[logging_handler]
     )
-
-    from river_observer import model
-
+    
     asyncio.run(main=main())
     logging.info("Stopped the main event loop.")
-    config_thread.stop()
-    config_thread.join()
-    logging.info("Stopped the configuration watcher.")

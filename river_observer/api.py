@@ -13,6 +13,7 @@ async def upload(depth: float, image_data: ImageData):
     image_data.realtime_image.save(image_bytes, format="png")
 
     async with aiohttp.ClientSession() as session:
+        _api_logger.info("Uploading inferenced data...")
         async with session.post(
             url=f"{config.get_config()['api']['url']}/upload",
             data={
@@ -25,4 +26,4 @@ async def upload(depth: float, image_data: ImageData):
         ) as resp:
             resp.raise_for_status()
             _api_logger.debug("Server response: %s", await resp.text())
-    _api_logger.info("Successfully sent the data.")
+    _api_logger.info("Uploaded the data successfully.")
