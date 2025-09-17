@@ -1,5 +1,7 @@
 FROM ultralytics/ultralytics:latest
 
+RUN [ "apt-get", "update" ]
+RUN [ "apt-get", "install", "-y", "tesseract-ocr" ]
 RUN [ "mkdir", "-p", "/workspace" ]
 
 WORKDIR /workspace
