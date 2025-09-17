@@ -1,7 +1,5 @@
-FROM pytorch/pytorch:2.8.0-cuda12.6-cudnn9-runtime
+FROM ultralytics/ultralytics:latest
 
-RUN [ "apt-get", "update" ]
-RUN [ "apt-get", "install", "-y", "libglib2.0-0", "libsm6", "libxrender1", "libgl1", "tesseract-ocr" ]
 RUN [ "mkdir", "-p", "/workspace" ]
 
 WORKDIR /workspace
