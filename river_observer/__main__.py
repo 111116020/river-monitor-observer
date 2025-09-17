@@ -9,7 +9,7 @@ from river_observer.util import CustomFormatter
 from river_observer.river_source.wra import WRAImageSource
 
 
-async def main(args):
+async def main():
     # Catch SIGTERM signal
     if platform.system().lower() != "windows":
         def sigterm_handler():
@@ -46,8 +46,6 @@ async def main(args):
             break
 
 if __name__ == "__main__":
-    args_parser = argparse.ArgumentParser()
-
     from river_observer import config
 
     config_thread = config.start_watcher()
@@ -61,7 +59,7 @@ if __name__ == "__main__":
 
     from river_observer import model
 
-    asyncio.run(main=main(args=args_parser.parse_args()))
+    asyncio.run(main=main())
     logging.info("Stopped the main event loop.")
     config_thread.stop()
     config_thread.join()
