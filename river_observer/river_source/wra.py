@@ -43,19 +43,10 @@ class WRAImageSource(ImageSource):
                 img_response.raise_for_status()
                 image = Image.open(io.BytesIO(await img_response.read()))
 
-                gauge_info: dict
-                if self.camera_id == (1, 96, 0,):
-                    gauge_info = {
-                        "max": 8,
-                        "meter_in_pixel": 1324
-                    }
-                else:
-                    gauge_info = {}
                 inference_data = {
                     "inference_processor": "WRAInferenceProcessor",
                     "init_kwargs": {
-                        "camera_id": self.camera_id,
-                        "gauge_info": gauge_info
+                        "camera_id": self.camera_id
                     }
                 }
 

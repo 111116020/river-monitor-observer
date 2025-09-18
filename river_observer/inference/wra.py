@@ -1,6 +1,5 @@
 import logging
 import pathlib
-import time
 from typing import Tuple
 
 from PIL import Image, ImageEnhance, ImageFilter
@@ -14,10 +13,9 @@ from river_observer.inference import InferenceProcessor
 
 
 class WRAInferenceProcessor(InferenceProcessor):
-    def __init__(self, camera_id: Tuple[int, int, int], gauge_info: dict):
+    def __init__(self, camera_id: Tuple[int, int, int]):
         super().__init__()
         self.camera_id = camera_id
-        self.gauge_info = gauge_info
         self._logger = logging.getLogger(self.__class__.__name__)
 
     def _is_ir(self, image: Image.Image):
@@ -30,19 +28,22 @@ class WRAInferenceProcessor(InferenceProcessor):
 
         image = image.filter(ImageFilter.SHARPEN)
         image = ImageEnhance.Brightness(image).enhance(0.8)
-        image = ImageEnhance.Contrast(image).enhance(5)
+        image = ImageEnhance.Contrast(image).enhance(2.5)
         
-        expanded_image = Image.new("RGB", (image.width + 16, image.height + 16), "red")
-        expanded_image.paste(image, (8, 8))
+        # Deprecated preprocessing method
+        # expanded_image = Image.new("RGB", (image.width + 16, image.height + 16), "red")
+        # expanded_image.paste(image, (8, 8))
 
-        img_r, img_g, img_b = expanded_image.split()
-        img_r_arr = numpy.asarray(img_r)
-        img_g_arr = numpy.asarray(img_g)
-        img_b_arr = numpy.asarray(img_b)
-        # image_arr = (img_r_arr > 128) & (img_g_arr < 128) & (img_b_arr < 128)
-        img_g_arr = img_g_arr + (img_g_arr == 0)    # Avoid division by zero
-        img_b_arr = img_b_arr + (img_b_arr == 0)    # Avoid division by zero
-        image_arr = (img_r_arr > 96) & (img_r_arr / img_g_arr > 1) & (img_r_arr / img_b_arr > 1)
+        # img_r, img_g, img_b = expanded_image.split()
+        # img_r_arr = numpy.asarray(img_r)
+        # img_g_arr = numpy.asarray(img_g)
+        # img_b_arr = numpy.asarray(img_b)
+        # # image_arr = (img_r_arr > 128) & (img_g_arr < 128) & (img_b_arr < 128)
+        # img_g_arr = img_g_arr + (img_g_arr == 0)    # Avoid division by zero
+        # img_b_arr = img_b_arr + (img_b_arr == 0)    # Avoid division by zero
+        # image_arr = (img_r_arr > 96) & (img_r_arr / img_g_arr > 1) & (img_r_arr / img_b_arr > 1)
+
+        image_arr = ~((numpy.asarray(image.convert("L")) & 0b10000000) > 0)
         
         labels, num_groups = scipy.ndimage.label(image_arr)
         for i in range(1, num_groups + 1):
@@ -62,9 +63,7 @@ class WRAInferenceProcessor(InferenceProcessor):
             [True, True],
         ])
         result_image = Image.fromarray(~image_arr)
-        return result_image.crop(
-            box=(8, 8, result_image.width - 8, result_image.height - 8)
-        )
+        return result_image
 
     def _ocr_1_96_0_nonir(self, gauge_image: Image.Image, tesseract_config: dict = {}):
         if "tesseract_cmd" in tesseract_config.keys():
@@ -86,7 +85,9 @@ class WRAInferenceProcessor(InferenceProcessor):
             ocr_result["height"]
         ))
         ocr_result.sort(key=lambda x: -x[2])
+        self._logger.debug("OCR result: %s", ocr_result)
 
+        predicted_depth = -1.0
         for x in range(len(ocr_result)):
             if not ocr_result[x][0].isdigit():
                 continue
@@ -99,13 +100,13 @@ class WRAInferenceProcessor(InferenceProcessor):
                 if y_num <= x_num:
                     break
                 y_mid = ocr_result[y][2] + ocr_result[y][4] / 2
-                return x_num + 0.25 - (gauge_image.height - x_mid) / (x_mid - y_mid) * (y_num - x_num)
-        return -1.0
+                predicted_depth = x_num + 0.25 - (gauge_image.height - x_mid) / (x_mid - y_mid) * (y_num - x_num)
+        return predicted_depth
 
     def _area_1_96_0_nonir(self, gauge_image: Image.Image):
         # Calculate the area of red pixels
-        gauge_area = numpy.count_nonzero(numpy.asarray(gauge_image.split()[0]) & 0b10000000)
-        return self.gauge_info["max"] - gauge_area / self.gauge_info["meter_in_pixel"]
+        gauge_area = numpy.count_nonzero(numpy.asarray(gauge_image.split()[0]) & 128)
+        return 8 - gauge_area / 1282
 
     def inference(self, image: Image.Image):
         image_is_ir = self._is_ir(image)
@@ -139,7 +140,6 @@ class WRAInferenceProcessor(InferenceProcessor):
         # Estimate with area
         if inferenced_depth < 0:
             self._logger.info("OCR failed! Falling back to area calculation.")
-            image.save("%d.jpg" % time.time())
             if self.camera_id == (1, 96, 0,):
                 if image_is_ir:
                     pass
